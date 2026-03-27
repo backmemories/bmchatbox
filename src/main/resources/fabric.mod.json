@@ -5,7 +5,7 @@
 	"name": "BMChatBox",
 	"description": "This is an example description! Tell everyone what your mod is about!",
 	"authors": [
-		"Me!"
+		"ToxicDixel_"
 	],
 	"contact": {
 		"homepage": "https://fabricmc.net/",
@@ -20,6 +20,9 @@
 		],
 		"fabric-datagen": [
 			"net.bmcb.BMChatBoxDataGenerator"
+		],
+		"client": [
+			"net.bmcb.BMChatBoxClient"
 		]
 	},
 	"mixins": [
