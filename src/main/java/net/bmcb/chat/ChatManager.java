@@ -8,37 +8,43 @@ public class ChatManager {
     private static final Queue<ChatMessage> queue = new LinkedList<>();
     private static ChatMessage currentMessage = null;
 
-    public static void addMessage(String text) {
-        queue.add(new ChatMessage(text));
+    public static void addMessage(String rawText) {
+        // Solo aceptar mensajes que tengan un nombre reconocible
+        // Formato <Player> mensaje  o  [Player] mensaje
+        boolean hasSender = (rawText.startsWith("<") && rawText.contains("> "))
+                || (rawText.startsWith("[") && rawText.contains("] "));
+        if (!hasSender) return;
 
-        // Si no hay mensaje activo, cargar el primero de una vez
+        ChatMessage msg = new ChatMessage(rawText);
+        queue.add(msg);
+
         if (currentMessage == null) {
             currentMessage = queue.poll();
         }
     }
 
-    /**
-     * Devuelve el mensaje actual (puede estar escribiéndose o ya completo).
-     * NO avanza automáticamente — el jugador debe llamar a advance().
-     */
     public static ChatMessage getCurrentMessage() {
         return currentMessage;
     }
 
-    /**
-     * El jugador presiona el botón para avanzar al siguiente mensaje.
-     * Si el typewriter no terminó todavía, revela el texto completo de golpe.
-     * Si ya terminó, pasa al siguiente mensaje de la cola.
-     */
     public static void advance() {
         if (currentMessage == null) return;
 
         if (!currentMessage.isTypewriterDone()) {
-            // Primer press: revela todo el texto de una vez (clásico RPG)
+            // Primer press: revela todo de golpe
             currentMessage.skipToEnd();
         } else {
-            // Segundo press: avanza al siguiente mensaje
-            currentMessage = queue.poll(); // null si no hay más
+            // Segundo press: si hay overflow, va al overflow primero
+            if (currentMessage.hasOverflow()) {
+                ChatMessage overflow = currentMessage.getOverflow();
+                // Insertar el overflow al frente de la cola
+                Queue<ChatMessage> temp = new LinkedList<>();
+                temp.add(overflow);
+                temp.addAll(queue);
+                queue.clear();
+                queue.addAll(temp);
+            }
+            currentMessage = queue.poll();
         }
     }
 
@@ -46,10 +52,13 @@ public class ChatManager {
         return currentMessage != null;
     }
 
-    /**
-     * Cuántos mensajes quedan en la cola (sin contar el actual).
-     */
     public static int getQueueSize() {
         return queue.size();
+    }
+
+    // Cuenta overflow + cola para saber si hay "más"
+    public static boolean hasMore() {
+        return currentMessage != null &&
+                (currentMessage.hasOverflow() || !queue.isEmpty());
     }
 }
