@@ -2,6 +2,9 @@
 	"required": true,
 	"package": "net.bmcb.mixin",
 	"compatibilityLevel": "JAVA_21",
-	"client": ["ChatHudMixin"],
+	"client": [
+		"ChatHudMixin",
+		"ChatScreenMixin"
+	],
 	"injectors": { "defaultRequire": 1 }
 }

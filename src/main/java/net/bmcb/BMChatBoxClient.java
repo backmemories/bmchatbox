@@ -8,9 +8,13 @@ import net.fabricmc.fabric.api.client.message.v1.ClientReceiveMessageEvents;
 import net.minecraft.client.option.KeyBinding;
 import net.minecraft.client.option.KeyBinding.Category;
 import net.minecraft.client.util.InputUtil;
+import net.minecraft.util.Identifier;
 import org.lwjgl.glfw.GLFW;
 
 public class BMChatBoxClient implements ClientModInitializer {
+
+    public static final KeyBinding.Category Category_BM =
+            KeyBinding.Category.create(Identifier.of("bmchatbox", "backmemories"));
 
     private static KeyBinding advanceKey;
 
@@ -22,7 +26,7 @@ public class BMChatBoxClient implements ClientModInitializer {
                 "key.bmchatbox.advance",
                 InputUtil.Type.KEYSYM,
                 GLFW.GLFW_KEY_Z,
-                Category.MISC
+                Category_BM
         ));
 
         // El render ahora lo hace el mixin directamente — no necesitamos HudRenderCallback
