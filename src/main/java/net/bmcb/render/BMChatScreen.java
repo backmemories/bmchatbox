@@ -124,7 +124,17 @@ public class BMChatScreen extends Screen {
         String displayText = textField.getText() + (cursorVisible ? "|" : " ");
 
         int wrapWidth = (int)((BOX_WIDTH - PADDING * 2) / (chatScale * TEXT_SCALE));
-        List<OrderedText> lines = textRenderer.wrapLines(Text.literal(displayText), wrapWidth);
+        List<OrderedText> lines = new java.util.ArrayList<>();
+
+// 🔥 convertir doble espacio en salto
+        String processedText = displayText.replaceAll(" {2,}", "\n");
+
+// 🔥 separar manualmente por líneas
+        String[] splitLines = processedText.split("\n");
+
+        for (String part : splitLines) {
+            lines.addAll(textRenderer.wrapLines(Text.literal(part), wrapWidth));
+        }
 
         int maxLines = 3;
         int startLine = Math.max(0, lines.size() - maxLines);

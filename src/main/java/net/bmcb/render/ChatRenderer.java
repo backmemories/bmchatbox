@@ -89,7 +89,14 @@ public class ChatRenderer {
         String visibleText = msg.getVisibleText();
         if (!visibleText.isEmpty()) {
             int wrapWidth = (int)((BOX_WIDTH - PADDING * 2) / (chatScale * TEXT_SCALE));
-            List<OrderedText> lines = textRenderer.wrapLines(Text.literal(visibleText), wrapWidth);
+            List<OrderedText> lines = new java.util.ArrayList<>();
+
+// dividir manualmente por saltos de línea
+            String[] splitLines = visibleText.split("\n");
+
+            for (String part : splitLines) {
+                lines.addAll(textRenderer.wrapLines(Text.literal(part), wrapWidth));
+            }
 
             int offsetY = y + PADDING;
             for (OrderedText line : lines) {
