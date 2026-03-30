@@ -21,7 +21,7 @@ public class BMChatScreen extends Screen {
     private static final int BOX_MARGIN_BOT   = 20;
     private static final int PADDING          = 10;
     private static final int LINE_HEIGHT      = 14;
-    private static final float TEXT_SCALE     = 1.5f;
+    private static final float TEXT_SCALE     = 1.35f;
     private static final int MAX_CHARS        = 256;
 
 

@@ -20,6 +20,9 @@ public class ChatMessage {
     private boolean fullyRevealed = false;
     private ChatMessage overflow = null;
 
+    private static final char PAUSE_CHAR = '\u0000';
+    private static final long PAUSE_DURATION_MS = 1000;
+
     public ChatMessage(String rawText) {
         String parsedName;
         String parsedMessage;
@@ -39,9 +42,12 @@ public class ChatMessage {
 
         this.senderName = parsedName;
 
+        // formateo...
+        //pausa
+        parsedMessage = parsedMessage.replace("--", String.valueOf(PAUSE_CHAR));
+
         // 🔥 aplicar doble espacio → salto
         parsedMessage = parsedMessage.replaceAll(" {2,}", "\n");
-
         // 🔥 cortar por líneas reales
         SplitResult result = splitByLines(parsedMessage);
 
@@ -168,8 +174,10 @@ public class ChatMessage {
         long now = System.currentTimeMillis();
         if (now - lastUpdateTime > 40) {
             if (visibleCharacters < fullText.length()) {
+                char revealed = fullText.charAt(visibleCharacters); // letra que se revela
                 visibleCharacters++;
                 lastUpdateTime = now;
+                ChatSound.playBlip(senderName, revealed); // reproducir blip
             } else {
                 fullyRevealed = true;
             }

@@ -1,0 +1,11 @@
+{
+  "blip_default": {
+    "sounds": ["bmchatbox:voces/blip_default"]
+  },
+  "blip_john": {
+    "sounds": ["bmchatbox:voces/blip_john"]
+  },
+  "blip_juan": {
+    "sounds": ["bmchatbox:voces/blip_juan"]
+  }
+}
