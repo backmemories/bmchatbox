@@ -11,6 +11,8 @@ import org.lwjgl.glfw.GLFW;
 
 import java.util.List;
 
+import static net.bmcb.render.ChatRenderer.*;
+
 public class BMChatScreen extends Screen {
 
     private static final int BOX_WIDTH        = 280;
@@ -20,15 +22,12 @@ public class BMChatScreen extends Screen {
     private static final int PADDING          = 10;
     private static final int LINE_HEIGHT      = 14;
     private static final float TEXT_SCALE     = 1.5f;
-    private static final int MAX_CHARS        = 95;
+    private static final int MAX_CHARS        = 256;
 
-    private static final int COLOR_WHITE  = 0xFFFFFFFF;
-    private static final int COLOR_BG     = 0xEE000000;
-    private static final int COLOR_BORDER = 0xFFFFFFFF;
 
     private long lastCursorBlink = 0;
     private boolean cursorVisible = true;
-    private static final long CURSOR_BLINK_MS = 500;
+    private static final long CURSOR_BLINK_MS = 250;
 
     private TextFieldWidget textField;
 
@@ -44,7 +43,7 @@ public class BMChatScreen extends Screen {
     protected void init() {
         this.textField = new TextFieldWidget(
                 this.textRenderer,
-                0, 0, // posición irrelevante (no lo usamos visualmente)
+                0, 0, // posición irrelevante
                 10, 10,
                 Text.literal("")
         );
@@ -127,7 +126,11 @@ public class BMChatScreen extends Screen {
         List<OrderedText> lines = new java.util.ArrayList<>();
 
 // 🔥 convertir doble espacio en salto
-        String processedText = displayText.replaceAll(" {2,}", "\n");
+        String processedText = displayText
+                .replaceAll(" {2,}", "\n")
+                .replace("| ", "\n")
+                .replace("/n ", "\n");
+
 
 // 🔥 separar manualmente por líneas
         String[] splitLines = processedText.split("\n");

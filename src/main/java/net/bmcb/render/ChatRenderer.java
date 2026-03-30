@@ -14,44 +14,75 @@ import java.util.List;
 
 public class ChatRenderer {
 
-    private static final int BOX_WIDTH        = 280;
-    private static final int BOX_HEIGHT       = 80;
-    private static final int BOX_MARGIN_RIGHT = 20;
+    private static final int BOX_WIDTH        = 300;
+    private static final int BOX_HEIGHT       = 90;
+    private static final int BOX_MARGIN_RIGHT = 25;
     private static final int BOX_MARGIN_TOP   = 20;
     private static final int PADDING          = 10;
     private static final int LINE_HEIGHT      = 14;
     private static final float TEXT_SCALE     = 1.3f;
 
-    private static final int COLOR_WHITE  = 0xFFFFFFFF;
-    private static final int COLOR_YELLOW = 0xFFFFFF00;
-    private static final int COLOR_BG     = 0xEE000000;
-    private static final int COLOR_BORDER = 0xFFFFFFFF;
-
-    // 🌿 SABORES
-    private static String currentFlavor = "dia_nublado";
-
-    // 🌿 TEXTURAS (todas 32x32)
-    private static final Identifier TEX_MENTA =
-            Identifier.of("bmchatbox", "textures/gui/sabor_menta.png");
-
-    private static final Identifier TEX_DIA_NUBLADO =
-            Identifier.of("bmchatbox", "textures/gui/sabor_dia_nublado.png");
-
-    private static final Identifier TEX_FRESA =
-            Identifier.of("bmchatbox", "textures/gui/fresa_francesa.png");
-
-    private static final Identifier TEX_VAINILLA =
-            Identifier.of("bmchatbox", "textures/gui/vainilla_vanilla.png");
-
-    private static final Identifier TEX_MORADO =
-            Identifier.of("bmchatbox", "textures/gui/bonito_morado.png");
+    public static final int COLOR_WHITE  = 0xFFFFFFFF;
+    public static final int COLOR_BG     = 0xEE000000;
+    public static final int COLOR_BORDER = 0xFFFFFFFF;
 
     private static final int TEX_SIZE = 32;
     private static final int CORNER   = 8;
 
-    private static final long BLINK_INTERVAL_MS = 345;
+    private static final long BLINK_INTERVAL_MS = 200;
     private static long lastBlinkTime = 0;
     private static boolean blinkState = false;
+
+    // sabor seleccionado / demo, menta_melina, dia_nublado, fresa francesa, vainilla vanilla, bonito morado
+    private static String currentFlavor = "menta_melina";
+
+    // cajas saborizadas
+    private static final Identifier SABOR_MENTA_MELINA =
+            Identifier.of("bmchatbox", "textures/gui/sabor_menta.png");
+    private static final Identifier SABOR_DIA_NUBLADO =
+            Identifier.of("bmchatbox", "textures/gui/sabor_dia_nublado.png");
+    private static final Identifier SABOR_FRESA_FRANCESA =
+            Identifier.of("bmchatbox", "textures/gui/sabor_fresa_francesa.png");
+    private static final Identifier SABOR_VAINILLA_VANILLA =
+            Identifier.of("bmchatbox", "textures/gui/sabor_vainilla_vanilla.png");
+    private static final Identifier SABOR_BONITO_MORADO =
+            Identifier.of("bmchatbox", "textures/gui/sabor_bonito_morado.png");
+
+    // indicadores saborizados
+    private static final Identifier IND_MENTA =
+            Identifier.of("bmchatbox", "textures/gui/ind_menta.png");
+    private static final Identifier IND_FRESA =
+            Identifier.of("bmchatbox", "textures/gui/ind_fresa_francesa.png");
+    private static final Identifier IND_VAINILLA =
+            Identifier.of("bmchatbox", "textures/gui/ind_vainilla.png");
+    private static final Identifier IND_NUBLADO =
+            Identifier.of("bmchatbox", "textures/gui/ind_dia_nublado.png");
+    private static final Identifier IND_MORADO =
+            Identifier.of("bmchatbox", "textures/gui/ind_bonito_morado.png");
+
+    //fondo saborizado
+    private static int SABOR_BG() {
+        switch (currentFlavor) {
+            case "menta_melina": return 0xEE290829;
+            case "fresa_francesa": return 0xEE003322;
+            case "vainilla_vanilla": return 0xEE003322;
+            case "dia_nublado": return 0xEE003322;
+            case "bonito_morado": return 0xEE003322;
+            default: return COLOR_BG;
+        }
+    }
+
+    //letra saborizada
+    private static int SABOR_TXT() {
+        switch (currentFlavor) {
+            case "menta_melina": return 0xFFe8e6b3;
+            case "fresa_francesa": return 0xFF003322;
+            case "vainilla_vanilla": return 0xFF003322;
+            case "dia_nublado": return 0xFF003322;
+            case "bonito_morado": return 0xFF003322;
+            default: return COLOR_BG;
+        }
+    }
 
     public static void setFlavor(String flavor) {
         currentFlavor = flavor;
@@ -86,19 +117,19 @@ public class ChatRenderer {
         int x = scaledW - boxW - (int)(BOX_MARGIN_RIGHT / chatScale);
         int y = (int)(BOX_MARGIN_TOP / chatScale);
 
-        // Nombre
+        // Nombre del jugador / titulo de la caja
         if (msg.hasSender()) {
             String name = msg.getSenderName();
             int nameX = x + PADDING;
-            int nameY = y - (int)(10 * TEXT_SCALE);
+            int nameY = y - (int)(9 * TEXT_SCALE); //altura
             int nameWidth = (int)(textRenderer.getWidth(name) * TEXT_SCALE) + PADDING;
 
-            context.fill(nameX - 2, nameY - 1, nameX + nameWidth, nameY + (int)(9 * TEXT_SCALE) + 1, COLOR_BG);
+            context.fill(nameX - 2, nameY - 1, nameX + nameWidth, nameY + (int)(9 * TEXT_SCALE) + 1, SABOR_BG());
 
             context.getMatrices().pushMatrix();
             context.getMatrices().translate(nameX, nameY);
             context.getMatrices().scale(TEXT_SCALE, TEXT_SCALE);
-            context.drawTextWithShadow(textRenderer, Text.literal(name), 0, 0, COLOR_YELLOW);
+            context.drawTextWithShadow(textRenderer, Text.literal(name), 0, 0, COLOR_WHITE);
             context.getMatrices().popMatrix();
         }
 
@@ -108,76 +139,82 @@ public class ChatRenderer {
         // Texto
         String visibleText = msg.getVisibleText();
         if (!visibleText.isEmpty()) {
-            int wrapWidth = (int)((BOX_WIDTH - PADDING * 2) / (chatScale * TEXT_SCALE));
-            List<OrderedText> lines = new java.util.ArrayList<>();
+//desplazamiento del texto horizontal
+            final int TEXT_OFFSET_X = 10;
+            int wrapWidth = (int)(((BOX_WIDTH - PADDING * 2 - TEXT_OFFSET_X) / (chatScale * TEXT_SCALE)) - 8);
 
+            List<OrderedText> lines = new java.util.ArrayList<>();
             String[] splitLines = visibleText.split("\n");
 
             for (String part : splitLines) {
                 lines.addAll(textRenderer.wrapLines(Text.literal(part), wrapWidth));
             }
+//desplazamiento del texto en vertical
+            final int TEXT_OFFSET_Y = 12; // desplazamiento extra hacia abajo
+            int offsetY = y + PADDING + TEXT_OFFSET_Y;
 
-            int offsetY = y + PADDING;
             for (OrderedText line : lines) {
                 context.getMatrices().pushMatrix();
-                context.getMatrices().translate(x + PADDING, offsetY);
+                context.getMatrices().translate(x + PADDING + TEXT_OFFSET_X, offsetY);
                 context.getMatrices().scale(TEXT_SCALE, TEXT_SCALE);
-                context.drawTextWithShadow(textRenderer, line, 0, 0, COLOR_WHITE);
+                context.drawTextWithShadow(textRenderer, line, 0, 0, SABOR_TXT());
                 context.getMatrices().popMatrix();
                 offsetY += (int)(LINE_HEIGHT * TEXT_SCALE);
             }
         }
 
         // Indicador
-        if (msg.isTypewriterDone()) {
-            String indicator;
+        if (msg.isTypewriterDone() && ChatManager.hasMore()) {
+            Identifier tex = getIndicatorTexture();
 
-            if (ChatManager.hasMore()) {
-                long now = System.currentTimeMillis();
-                if (now - lastBlinkTime >= BLINK_INTERVAL_MS) {
-                    blinkState = !blinkState;
-                    lastBlinkTime = now;
-                }
-                indicator = blinkState ? "●" : "▼";
-            } else {
-                indicator = "■";
+// animación continua
+            long now = System.currentTimeMillis();
+            if (now - lastBlinkTime >= BLINK_INTERVAL_MS) {
+                blinkState = !blinkState;
+                lastBlinkTime = now;
             }
 
-            int indW = (int)(textRenderer.getWidth(indicator) * TEXT_SCALE);
+// frame (0 o 1)
+            int frame = blinkState ? 0 : 1;
+
+// tamaño en pantalla
+            int size = (int)(10 * TEXT_SCALE);
+
+// posición
+            int drawX = x + boxW - PADDING - size;
+            int drawY = y + boxH - PADDING - size;
+
+// coordenada V (vertical en la textura)
+            int v = frame * 5;
+
             context.getMatrices().pushMatrix();
-            context.getMatrices().translate(
-                    x + boxW - PADDING - indW,
-                    y + boxH - PADDING - (int)(LINE_HEIGHT * TEXT_SCALE));
-            context.getMatrices().scale(TEXT_SCALE, TEXT_SCALE);
-            context.drawTextWithShadow(textRenderer, Text.literal(indicator), 0, 0, COLOR_WHITE);
+            context.getMatrices().translate(drawX, drawY);
+            context.getMatrices().scale(size / 5f, size / 5f);
+            context.drawTexture(
+                    RenderPipelines.GUI_TEXTURED,
+                    tex,
+                    0, 0,
+                    0, v,
+                    5, 5,
+                    5, 10
+            );
+
             context.getMatrices().popMatrix();
         }
 
         context.getMatrices().popMatrix();
     }
 
-    // 🎨 Selector
+    // demo o sabores ricos?
     private static void drawBox(DrawContext ctx, int x, int y, int w, int h) {
         if (currentFlavor.equals("demo")) {
-            drawDemo(ctx, x, y, w, h);
+            SABOR_DEMO(ctx, x, y, w, h); //dejé el sabor demo porque soy muy nostalgico con las cosas que funcionan bien u-u
         } else {
             drawNineSlice(ctx, x, y, w, h, getTexture());
         }
     }
-
-    private static Identifier getTexture() {
-        switch (currentFlavor) {
-            case "menta": return TEX_MENTA;
-            case "dia_nublado": return TEX_DIA_NUBLADO;
-            case "fresa_francesa": return TEX_FRESA;
-            case "vainilla_vanilla": return TEX_VAINILLA;
-            case "bonito_morado": return TEX_MORADO;
-            default: return TEX_MENTA;
-        }
-    }
-
-    // 🔲 DEMO
-    private static void drawDemo(DrawContext ctx, int x, int y, int w, int h) {
+    // sabor demo / por el recuerdo
+    private static void SABOR_DEMO(DrawContext ctx, int x, int y, int w, int h) {
         ctx.fill(x, y, x + w, y + h, COLOR_BG);
 
         ctx.fill(x, y, x + w, y + 1, COLOR_BORDER);
@@ -186,47 +223,79 @@ public class ChatRenderer {
         ctx.fill(x + w - 1, y, x + w, y + h, COLOR_BORDER);
     }
 
-    // 🌿 9-SLICE GENÉRICO
+    //lista de sabores
+    private static Identifier getTexture() {
+        switch (currentFlavor) {
+            case "menta_melina": return SABOR_MENTA_MELINA;
+            case "dia_nublado": return SABOR_DIA_NUBLADO;
+            case "fresa_francesa": return SABOR_FRESA_FRANCESA;
+            case "vainilla_vanilla": return SABOR_VAINILLA_VANILLA;
+            case "bonito_morado": return SABOR_BONITO_MORADO;
+            default: return SABOR_MENTA_MELINA;
+        }
+    }
+    //lista de indicadores
+    private static Identifier getIndicatorTexture() {
+        switch (currentFlavor) {
+            case "menta": return IND_MENTA;
+            case "fresa": return IND_FRESA;
+            case "vainilla": return IND_VAINILLA;
+            case "nublado": return IND_NUBLADO;
+            case "morado": return IND_MORADO;
+            default: return IND_MENTA;
+        }
+    }
+
+    // 9slice para los sabores
     private static void drawNineSlice(DrawContext ctx, int x, int y, int w, int h, Identifier texture) {
+        final int PS = 2; // pixel scale
         int cs = CORNER;
         int ts = TEX_SIZE;
+        int scs = cs * PS; // esquina en pantalla = 8*2 = 16px
 
         // Esquinas
-        drawPart(ctx, texture, x, y, 0, 0, cs, cs);
-        drawPart(ctx, texture, x + w - cs, y, ts - cs, 0, cs, cs);
-        drawPart(ctx, texture, x, y + h - cs, 0, ts - cs, cs, cs);
-        drawPart(ctx, texture, x + w - cs, y + h - cs, ts - cs, ts - cs, cs, cs);
+        drawPartScaled(ctx, texture, x,          y,          0,       0,       scs, scs, cs, cs);
+        drawPartScaled(ctx, texture, x + w - scs, y,         ts - cs, 0,       scs, scs, cs, cs);
+        drawPartScaled(ctx, texture, x,          y + h - scs, 0,      ts - cs, scs, scs, cs, cs);
+        drawPartScaled(ctx, texture, x + w - scs, y + h - scs, ts-cs, ts - cs, scs, scs, cs, cs);
 
-        // Bordes
-        for (int i = x + cs; i < x + w - cs; i += cs) {
-            int segW = Math.min(cs, (x + w - cs) - i);
-            drawPart(ctx, texture, i, y, cs, 0, segW, cs);
-            drawPart(ctx, texture, i, y + h - cs, cs, ts - cs, segW, cs);
+        // Bordes horizontales
+        for (int i = x + scs; i < x + w - scs; i += scs) {
+            int segW = Math.min(scs, (x + w - scs) - i);
+            drawPartScaled(ctx, texture, i, y,           cs, 0,       segW, scs, segW/PS, cs);
+            drawPartScaled(ctx, texture, i, y + h - scs, cs, ts - cs, segW, scs, segW/PS, cs);
         }
 
-        for (int j = y + cs; j < y + h - cs; j += cs) {
-            int segH = Math.min(cs, (y + h - cs) - j);
-            drawPart(ctx, texture, x, j, 0, cs, cs, segH);
-            drawPart(ctx, texture, x + w - cs, j, ts - cs, cs, cs, segH);
+        // Bordes verticales
+        for (int j = y + scs; j < y + h - scs; j += scs) {
+            int segH = Math.min(scs, (y + h - scs) - j);
+            drawPartScaled(ctx, texture, x,          j, 0,       cs, scs, segH, cs, segH/PS);
+            drawPartScaled(ctx, texture, x + w - scs, j, ts - cs, cs, scs, segH, cs, segH/PS);
         }
 
         // Centro
-        for (int i = x + cs; i < x + w - cs; i += cs) {
-            for (int j = y + cs; j < y + h - cs; j += cs) {
-                int segW = Math.min(cs, (x + w - cs) - i);
-                int segH = Math.min(cs, (y + h - cs) - j);
-                drawPart(ctx, texture, i, j, cs, cs, segW, segH);
+        for (int i = x + scs; i < x + w - scs; i += scs) {
+            for (int j = y + scs; j < y + h - scs; j += scs) {
+                int segW = Math.min(scs, (x + w - scs) - i);
+                int segH = Math.min(scs, (y + h - scs) - j);
+                drawPartScaled(ctx, texture, i, j, cs, cs, segW, segH, segW/PS, segH/PS);
             }
         }
     }
 
-    private static void drawPart(DrawContext ctx, Identifier texture, int x, int y, int u, int v, int w, int h) {
+    // x,y,u,v = posición y coord textura
+// dw,dh = tamaño en pantalla (escalado)
+// sw,sh = región de textura a leer
+    private static void drawPartScaled(DrawContext ctx, Identifier texture,
+                                       int x, int y, int u, int v,
+                                       int dw, int dh, int sw, int sh) {
         ctx.drawTexture(
                 RenderPipelines.GUI_TEXTURED,
                 texture,
                 x, y,
                 u, v,
-                w, h,
+                dw, dh,
+                sw, sh,  // región de textura fuente
                 TEX_SIZE, TEX_SIZE
         );
     }
