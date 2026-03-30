@@ -18,10 +18,19 @@ public class ChatMessage {
     private int visibleCharacters = 0;
     private long lastUpdateTime = 0;
     private boolean fullyRevealed = false;
+    private boolean currentlyPausing = false;
+    private boolean currentlySlowDot = false;
     private ChatMessage overflow = null;
 
-    private static final char PAUSE_CHAR = '\u0000';
-    private static final long PAUSE_DURATION_MS = 1000;
+    private static final char PAUSE_CHAR         = '\uE000';
+    private static final char NEWLINE_PAUSE_CHAR  = '\uE001';
+    private static final char SLOW_DOT_CHAR       = '\uE002';
+
+    private static final long PAUSE_DURATION_MS  = 1000;
+    private static final long NEWLINE_DURATION_MS = 400;
+    private static final long SLOW_DOT_MS         = 400;
+
+    private long currentPauseDuration = PAUSE_DURATION_MS;
 
     public ChatMessage(String rawText) {
         String parsedName;
@@ -42,16 +51,25 @@ public class ChatMessage {
 
         this.senderName = parsedName;
 
-        // formateo...
-        //pausa
+        // pausa --
         parsedMessage = parsedMessage.replace("--", String.valueOf(PAUSE_CHAR));
 
-        // 🔥 aplicar doble espacio → salto
-        parsedMessage = parsedMessage.replaceAll(" {2,}", "\n");
-        // 🔥 cortar por líneas reales
+        // puntos lentos
+        parsedMessage = parsedMessage.replace("...",
+                String.valueOf(SLOW_DOT_CHAR) +
+                        String.valueOf(SLOW_DOT_CHAR) +
+                        String.valueOf(SLOW_DOT_CHAR));
+
+        // saltos de línea manuales con pausa
+        String np = String.valueOf(NEWLINE_PAUSE_CHAR);
+        parsedMessage = parsedMessage.replace("  ", "\n" + np);
+        parsedMessage = parsedMessage.replace("/n ", "\n" + np);
+        parsedMessage = parsedMessage.replace("| ", "\n" + np);
+
+        // cortar por líneas reales
         SplitResult result = splitByLines(parsedMessage);
 
-        this.fullText = result.current.trim();
+        this.fullText = result.current;
 
         if (!result.rest.isEmpty()) {
             this.overflow = new ChatMessage(result.rest, parsedName);
@@ -66,14 +84,13 @@ public class ChatMessage {
 
         SplitResult result = splitByLines(text);
 
-        this.fullText = result.current.trim();
+        this.fullText = result.current;
 
         if (!result.rest.isEmpty()) {
             this.overflow = new ChatMessage(result.rest, senderName);
         }
     }
 
-    // 🔥 NUEVO: divide el texto según lo que entra en la caja
     private SplitResult splitByLines(String text) {
 
         MinecraftClient client = MinecraftClient.getInstance();
@@ -92,12 +109,9 @@ public class ChatMessage {
 
         int wrapWidth = (int)((BOX_WIDTH - PADDING * 2) / (chatScale * TEXT_SCALE));
 
-        // 🔥 convertir a líneas respetando \n
         List<String> logicalLines = new ArrayList<>();
         for (String part : text.split("\n", -1)) {
             List<OrderedText> wrapped = textRenderer.wrapLines(Text.literal(part), wrapWidth);
-
-            // cada línea wrapeada cuenta como una línea visual
             for (int i = 0; i < wrapped.size(); i++) {
                 logicalLines.add(part);
             }
@@ -107,13 +121,10 @@ public class ChatMessage {
             return new SplitResult(text, "");
         }
 
-        // 🔥 encontrar el índice exacto donde cortar
         int lineCount = 0;
         int cutIndex = 0;
 
-        outer:
         for (int i = 0; i < text.length(); i++) {
-
             if (text.charAt(i) == '\n') {
                 lineCount++;
                 if (lineCount >= MAX_LINES) {
@@ -121,9 +132,6 @@ public class ChatMessage {
                     break;
                 }
             }
-
-            // simular wrap por longitud aproximada
-            // (no perfecto, pero mantiene coherencia sin romper \n)
             if ((i - cutIndex) > MAX_CHARS) {
                 lineCount++;
                 if (lineCount >= MAX_LINES) {
@@ -137,13 +145,12 @@ public class ChatMessage {
             return splitByChars(text);
         }
 
-        String current = text.substring(0, cutIndex).trim();
-        String rest = text.substring(cutIndex).trim();
+        String current = text.substring(0, cutIndex);
+        String rest = text.substring(cutIndex);
 
         return new SplitResult(current, rest);
     }
 
-    // 🔧 fallback original por caracteres
     private SplitResult splitByChars(String text) {
         if (text.length() <= MAX_CHARS) {
             return new SplitResult(text, "");
@@ -172,15 +179,52 @@ public class ChatMessage {
     public void update() {
         if (fullyRevealed) return;
         long now = System.currentTimeMillis();
-        if (now - lastUpdateTime > 40) {
-            if (visibleCharacters < fullText.length()) {
-                char revealed = fullText.charAt(visibleCharacters); // letra que se revela
-                visibleCharacters++;
+
+        long interval;
+        if (currentlyPausing) {
+            interval = currentPauseDuration;
+        } else if (currentlySlowDot) {
+            interval = SLOW_DOT_MS;
+        } else {
+            interval = 40;
+        }
+
+        if (now - lastUpdateTime < interval) return;
+
+        currentlyPausing = false;
+        currentlySlowDot = false;
+
+        if (visibleCharacters < fullText.length()) {
+            char next = fullText.charAt(visibleCharacters);
+
+            if (next == PAUSE_CHAR) {
+                currentlyPausing = true;
+                currentPauseDuration = PAUSE_DURATION_MS;
                 lastUpdateTime = now;
-                ChatSound.playBlip(senderName, revealed); // reproducir blip
-            } else {
-                fullyRevealed = true;
+                visibleCharacters++;
+                return;
             }
+
+            if (next == NEWLINE_PAUSE_CHAR) {
+                currentlyPausing = true;
+                currentPauseDuration = NEWLINE_DURATION_MS;
+                lastUpdateTime = now;
+                visibleCharacters++;
+                return;
+            }
+
+            visibleCharacters++;
+            lastUpdateTime = now;
+
+            if (next == SLOW_DOT_CHAR) {
+                currentlySlowDot = true;
+                ChatSound.playBlip(senderName, '.');
+            } else {
+                ChatSound.playBlip(senderName, next);
+            }
+
+        } else {
+            fullyRevealed = true;
         }
     }
 
@@ -190,7 +234,10 @@ public class ChatMessage {
     }
 
     public String getVisibleText() {
-        return fullText.substring(0, visibleCharacters);
+        return fullText.substring(0, visibleCharacters)
+                .replace(String.valueOf(PAUSE_CHAR), "")
+                .replace(String.valueOf(NEWLINE_PAUSE_CHAR), "")
+                .replace(String.valueOf(SLOW_DOT_CHAR), ".");
     }
 
     public String getSenderName() {

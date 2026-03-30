@@ -2,6 +2,9 @@
   "blip_default": {
     "sounds": ["bmchatbox:voces/blip_default"]
   },
+  "blip_backmemories": {
+    "sounds": ["bmchatbox:voces/blip_backmemories"]
+  },
   "blip_john": {
     "sounds": ["bmchatbox:voces/blip_john"]
   },

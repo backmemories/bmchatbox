@@ -34,7 +34,7 @@ public class ChatRenderer {
     private static boolean blinkState = false;
 
     // sabor seleccionado / demo, menta_melina, dia_nublado, fresa francesa, vainilla vanilla, bonito morado
-    private static String currentFlavor = "menta_melina";
+    private static String currentFlavor = "dia_nublado";
 
     // cajas saborizadas
     private static final Identifier SABOR_MENTA_MELINA =
@@ -66,7 +66,7 @@ public class ChatRenderer {
             case "menta_melina": return 0xEE290829;
             case "fresa_francesa": return 0xEE003322;
             case "vainilla_vanilla": return 0xEE003322;
-            case "dia_nublado": return 0xEE003322;
+            case "dia_nublado": return 0xEE0f0f0f;
             case "bonito_morado": return 0xEE003322;
             default: return COLOR_BG;
         }
@@ -78,7 +78,7 @@ public class ChatRenderer {
             case "menta_melina": return 0xFFe8e6b3;
             case "fresa_francesa": return 0xFF003322;
             case "vainilla_vanilla": return 0xFF003322;
-            case "dia_nublado": return 0xFF003322;
+            case "dia_nublado": return 0xFFf0f0f0;
             case "bonito_morado": return 0xFF003322;
             default: return COLOR_BG;
         }
@@ -181,8 +181,8 @@ public class ChatRenderer {
             int size = (int)(10 * TEXT_SCALE);
 
 // posición
-            int drawX = x + boxW - PADDING - size;
-            int drawY = y + boxH - PADDING - size;
+            int drawX = x + boxW - PADDING - size - 5;
+            int drawY = y + boxH - PADDING - size + 5;
 
 // coordenada V (vertical en la textura)
             int v = frame * 5;
@@ -237,11 +237,12 @@ public class ChatRenderer {
     //lista de indicadores
     private static Identifier getIndicatorTexture() {
         switch (currentFlavor) {
-            case "menta": return IND_MENTA;
-            case "fresa": return IND_FRESA;
-            case "vainilla": return IND_VAINILLA;
-            case "nublado": return IND_NUBLADO;
-            case "morado": return IND_MORADO;
+            case "demo": return IND_NUBLADO; //en realidad la demo no tiene indicador pero bueno
+            case "menta_melina": return IND_MENTA;
+            case "fresa_francesa": return IND_FRESA;
+            case "vainilla_vanilla": return IND_VAINILLA;
+            case "dia_nublado": return IND_NUBLADO;
+            case "bonito_morado": return IND_MORADO;
             default: return IND_MENTA;
         }
     }

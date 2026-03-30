@@ -16,6 +16,8 @@ public class ChatSound {
     // -------------------------
     // 🔊 REGISTRO DE SONIDOS
     // -------------------------
+    public static final SoundEvent BLIP_BACKMEMORIES    = register("blip_backmemories");
+
     public static final SoundEvent BLIP_DEFAULT = register("blip_default");
     public static final SoundEvent BLIP_JOHN    = register("blip_john");
     public static final SoundEvent BLIP_JUAN    = register("blip_juan");
@@ -31,12 +33,15 @@ public class ChatSound {
     // BLIP PLAYER
     // -------------------------
     private static final Random random = new Random();
-    private static final String SILENT_CHARS = " .,;:-_\n\"'()[]{}";
+    private static final String SILENT_CHARS = " *;:-_\n\"'()[]{}";
 
     private static final Map<String, SoundEvent> VOICE_MAP   = new HashMap<>();
     private static final Map<String, float[]>    PITCH_RANGES = new HashMap<>();
 
     static {
+        VOICE_MAP.put("BackMemories", BLIP_BACKMEMORIES);
+        PITCH_RANGES.put("BackMemories", new float[]{1.0f, 1.0f});
+
         // John: voz grave
         VOICE_MAP.put("John", BLIP_JOHN);
         PITCH_RANGES.put("John", new float[]{0.6f, 0.8f});

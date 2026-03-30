@@ -15,11 +15,6 @@ public class ChatManager {
                 || (rawText.startsWith("[") && rawText.contains("] "));
         if (!hasSender) return;
 
-        // convertir doble espacio en salto lógico
-        rawText = rawText.replaceAll(" {2,}", "\n");
-        rawText = rawText.replace("| ", "\n");
-        rawText = rawText.replace("/n ", "\n");
-
         ChatMessage msg = new ChatMessage(rawText);
         queue.add(msg);
 
