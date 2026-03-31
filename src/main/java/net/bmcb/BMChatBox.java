@@ -1,6 +1,8 @@
 package net.bmcb;
 
 import net.bmcb.chat.ChatSound;
+import net.bmcb.chat.FlavorManager;
+import net.bmcb.network.FlavorPackets;
 import net.fabricmc.api.ModInitializer;
 
 import org.slf4j.Logger;
@@ -22,5 +24,9 @@ public class BMChatBox implements ModInitializer {
 		LOGGER.info("Hello Fabric world!");
 
 		ChatSound.initialize();
+		FlavorManager.load();
+		FlavorPackets.registerServer();
+
+
 	}
 }

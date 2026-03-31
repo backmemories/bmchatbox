@@ -2,6 +2,7 @@ package net.bmcb.render;
 
 import net.bmcb.chat.ChatManager;
 import net.bmcb.chat.ChatMessage;
+import net.bmcb.chat.FlavorManager;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.font.TextRenderer;
 import net.minecraft.client.gl.RenderPipelines;
@@ -34,6 +35,7 @@ public class ChatRenderer {
     private static boolean blinkState = false;
 
     // sabor seleccionado / demo, menta_melina, dia_nublado, fresa francesa, vainilla vanilla, bonito morado
+    // //// sobreescrito en cada render por FlavorManager ////
     private static String currentFlavor = "dia_nublado";
 
     // cajas saborizadas
@@ -63,11 +65,11 @@ public class ChatRenderer {
     //fondo saborizado
     private static int SABOR_BG() {
         switch (currentFlavor) {
-            case "menta_melina": return 0xEE290829;
-            case "fresa_francesa": return 0xEE003322;
+            case "menta_melina": return 0xFF393152;
+            case "fresa_francesa": return 0xFF42214a;
             case "vainilla_vanilla": return 0xEE003322;
-            case "dia_nublado": return 0xEE0f0f0f;
-            case "bonito_morado": return 0xEE003322;
+            case "dia_nublado": return 0xFF0f0f0f;
+            case "bonito_morado": return 0xFF003322;
             default: return COLOR_BG;
         }
     }
@@ -76,16 +78,12 @@ public class ChatRenderer {
     private static int SABOR_TXT() {
         switch (currentFlavor) {
             case "menta_melina": return 0xFFe8e6b3;
-            case "fresa_francesa": return 0xFF003322;
-            case "vainilla_vanilla": return 0xFF003322;
+            case "fresa_francesa": return 0xFFe8e6b3;
+            case "vainilla_vanilla": return 0xFFe8e6b3;
             case "dia_nublado": return 0xFFf0f0f0;
             case "bonito_morado": return 0xFF003322;
             default: return COLOR_BG;
         }
-    }
-
-    public static void setFlavor(String flavor) {
-        currentFlavor = flavor;
     }
 
     public static void render(DrawContext context) {
@@ -133,6 +131,10 @@ public class ChatRenderer {
             context.getMatrices().popMatrix();
         }
 
+        // 🎨 aplicar sabor del jugador actual
+        if (msg.hasSender()) {
+            currentFlavor = FlavorManager.getFlavor(msg.getSenderName());
+        }
         // 🧩 CAJA
         drawBox(context, x, y, boxW, boxH);
 
