@@ -1,5 +1,6 @@
 package net.bmcb.screen;
 
+import net.bmcb.chat.ChatSound;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.font.TextRenderer;
@@ -55,9 +56,16 @@ public class BMChatScreen extends Screen {
     }
 
     public boolean charTyped(net.minecraft.client.input.CharInput input) {
-        return this.textField.charTyped(input);
+        boolean result = this.textField.charTyped(input);
+        if (result) {
+            // sonar blip con la voz del jugador local
+            String miNombre = this.client.player != null
+                    ? this.client.player.getGameProfile().name()
+                    : "default";
+            ChatSound.playBlip(miNombre, (char) input.codepoint());
+        }
+        return result;
     }
-
     @Override
     public boolean keyPressed(KeyInput input) {
 

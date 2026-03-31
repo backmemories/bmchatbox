@@ -1,6 +1,7 @@
 package net.bmcb;
 
 import net.bmcb.chat.ChatSound;
+import net.bmcb.chat.FlavorCommand;
 import net.bmcb.chat.FlavorManager;
 import net.bmcb.network.FlavorPackets;
 import net.fabricmc.api.ModInitializer;
@@ -26,6 +27,7 @@ public class BMChatBox implements ModInitializer {
 		ChatSound.initialize();
 		FlavorManager.load();
 		FlavorPackets.registerServer();
+		FlavorCommand.register();
 
 
 	}

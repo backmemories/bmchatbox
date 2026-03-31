@@ -2,12 +2,11 @@ package net.bmcb.chat;
 
 import com.mojang.brigadier.arguments.StringArgumentType;
 import net.bmcb.network.FlavorPackets;
-import net.fabricmc.fabric.api.client.command.v2.ClientCommandManager;
-import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallback;
-import net.minecraft.client.MinecraftClient;
+import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
+import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
+import net.minecraft.server.command.CommandManager;
+import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.text.Text;
-import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
-
 
 import java.util.List;
 
@@ -18,14 +17,14 @@ public class FlavorCommand {
     );
 
     public static void register() {
-        ClientCommandRegistrationCallback.EVENT.register((dispatcher, registryAccess) -> {
+        CommandRegistrationCallback.EVENT.register((dispatcher, registryAccess, environment) -> {
             dispatcher.register(
-                    ClientCommandManager.literal("bmchat")
-                            .then(ClientCommandManager.literal("sabor")
+                    CommandManager.literal("bmchat")
+                            .requires(source -> source.hasPermissionLevel(2))
+                            .then(CommandManager.literal("sabor")
 
-                                    // --- @a ---
-                                    .then(ClientCommandManager.literal("@a")
-                                            .then(ClientCommandManager.argument("sabor", StringArgumentType.word())
+                                    .then(CommandManager.literal("@a")
+                                            .then(CommandManager.argument("sabor", StringArgumentType.word())
                                                     .suggests((context, builder) -> {
                                                         SABORES.forEach(builder::suggest);
                                                         return builder.buildFuture();
@@ -33,57 +32,28 @@ public class FlavorCommand {
                                                     .executes(context -> {
                                                         String sabor = StringArgumentType.getString(context, "sabor");
                                                         if (!SABORES.contains(sabor)) {
-                                                            context.getSource().sendFeedback(Text.literal("§cSabor inválido. Opciones: " + String.join(", ", SABORES)));
+                                                            context.getSource().sendFeedback(
+                                                                    () -> Text.literal("§cSabor inválido. Opciones: " + String.join(", ", SABORES)), false);
                                                             return 0;
                                                         }
-                                                        MinecraftClient client = MinecraftClient.getInstance();
-                                                        if (client.getNetworkHandler() != null) {
-                                                            client.getNetworkHandler().getPlayerList().forEach(p -> {
-                                                                String nombre = p.getProfile().name();
-                                                                ClientPlayNetworking.send(new FlavorPackets.SetFlavorPayload(nombre, sabor));
-                                                            });
-                                                        }
-                                                        context.getSource().sendFeedback(Text.literal("Sabor de todos cambiado a " + sabor));
+                                                        context.getSource().getServer().getPlayerManager().getPlayerList().forEach(p -> {
+                                                            String nombre = p.getGameProfile().name();
+                                                            ServerPlayNetworking.send(p, new FlavorPackets.SyncFlavorPayload(nombre, sabor));
+                                                        });
+                                                        context.getSource().sendFeedback(
+                                                                () -> Text.literal("§aSabor de todos cambiado a " + sabor), true);
                                                         return 1;
                                                     })
                                             )
                                     )
 
-                                    // --- @p ---
-                                    .then(ClientCommandManager.literal("@p")
-                                            .then(ClientCommandManager.argument("sabor", StringArgumentType.word())
-                                                    .suggests((context, builder) -> {
-                                                        SABORES.forEach(builder::suggest);
-                                                        return builder.buildFuture();
-                                                    })
-                                                    .executes(context -> {
-                                                        String sabor = StringArgumentType.getString(context, "sabor");
-                                                        if (!SABORES.contains(sabor)) {
-                                                            context.getSource().sendFeedback(Text.literal("§cSabor inválido. Opciones: " + String.join(", ", SABORES)));
-                                                            return 0;
-                                                        }
-                                                        MinecraftClient client = MinecraftClient.getInstance();
-                                                        if (client.player == null) return 0;
-                                                        String miNombre = client.player.getGameProfile().name();
-                                                        ClientPlayNetworking.send(new FlavorPackets.SetFlavorPayload(miNombre, sabor));
-                                                        context.getSource().sendFeedback(Text.literal("Sabor propio cambiado a " + sabor));
-                                                        return 1;
-                                                    })
-                                            )
-                                    )
-
-                                    // --- jugador por nombre ---
-                                    .then(ClientCommandManager.argument("jugador", StringArgumentType.word())
+                                    .then(CommandManager.argument("jugador", StringArgumentType.word())
                                             .suggests((context, builder) -> {
-                                                MinecraftClient client = MinecraftClient.getInstance();
-                                                if (client.getNetworkHandler() != null) {
-                                                    client.getNetworkHandler().getPlayerList().forEach(p ->
-                                                            builder.suggest(p.getProfile().name())
-                                                    );
-                                                }
+                                                context.getSource().getServer().getPlayerManager().getPlayerList()
+                                                        .forEach(p -> builder.suggest(p.getGameProfile().name()));
                                                 return builder.buildFuture();
                                             })
-                                            .then(ClientCommandManager.argument("sabor", StringArgumentType.word())
+                                            .then(CommandManager.argument("sabor", StringArgumentType.word())
                                                     .suggests((context, builder) -> {
                                                         SABORES.forEach(builder::suggest);
                                                         return builder.buildFuture();
@@ -92,13 +62,20 @@ public class FlavorCommand {
                                                         String jugador = StringArgumentType.getString(context, "jugador");
                                                         String sabor   = StringArgumentType.getString(context, "sabor");
                                                         if (!SABORES.contains(sabor)) {
-                                                            context.getSource().sendFeedback(Text.literal("§cSabor inválido. Opciones: " + String.join(", ", SABORES)));
+                                                            context.getSource().sendFeedback(
+                                                                    () -> Text.literal("§cSabor inválido. Opciones: " + String.join(", ", SABORES)), false);
                                                             return 0;
                                                         }
-                                                        MinecraftClient client = MinecraftClient.getInstance();
-                                                        if (client.player == null) return 0;
-                                                        ClientPlayNetworking.send(new FlavorPackets.SetFlavorPayload(jugador, sabor));
-                                                        context.getSource().sendFeedback(Text.literal("Sabor de " + jugador + " cambiado a " + sabor));
+                                                        ServerPlayerEntity player = context.getSource().getServer()
+                                                                .getPlayerManager().getPlayer(jugador);
+                                                        if (player == null) {
+                                                            context.getSource().sendFeedback(
+                                                                    () -> Text.literal("§cJugador no encontrado: " + jugador), false);
+                                                            return 0;
+                                                        }
+                                                        ServerPlayNetworking.send(player, new FlavorPackets.SyncFlavorPayload(jugador, sabor));
+                                                        context.getSource().sendFeedback(
+                                                                () -> Text.literal("§aSabor de " + jugador + " cambiado a " + sabor), true);
                                                         return 1;
                                                     })
                                             )

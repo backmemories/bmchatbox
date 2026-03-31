@@ -82,7 +82,7 @@ public class ChatRenderer {
             case "vainilla_vanilla": return 0xFFe8e6b3;
             case "dia_nublado": return 0xFFf0f0f0;
             case "bonito_morado": return 0xFF003322;
-            default: return COLOR_BG;
+            default: return COLOR_WHITE;
         }
     }
 
@@ -131,9 +131,10 @@ public class ChatRenderer {
             context.getMatrices().popMatrix();
         }
 
-        // 🎨 aplicar sabor del jugador actual
-        if (msg.hasSender()) {
-            currentFlavor = FlavorManager.getFlavor(msg.getSenderName());
+        // 🎨 aplicar sabor del jugador local (quien está viendo)
+        MinecraftClient client2 = MinecraftClient.getInstance();
+        if (client2 != null && client2.player != null) {
+            currentFlavor = FlavorManager.getFlavor(client2.player.getGameProfile().name());
         }
         // 🧩 CAJA
         drawBox(context, x, y, boxW, boxH);
