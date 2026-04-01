@@ -1,6 +1,7 @@
 package net.bmcb.network;
 
 import net.bmcb.chat.FlavorManager;
+import net.bmcb.chat.FontManager;
 import net.fabricmc.fabric.api.networking.v1.PayloadTypeRegistry;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.network.PacketByteBuf;
@@ -55,8 +56,23 @@ public class FlavorPackets {
     // 🔧 Registro (llamar desde el servidor)
     // -----------------------------------------------
     public static void registerServer() {
+        //sabor de caja
         PayloadTypeRegistry.playC2S().register(SetFlavorPayload.ID, SetFlavorPayload.CODEC);
         PayloadTypeRegistry.playS2C().register(SyncFlavorPayload.ID, SyncFlavorPayload.CODEC);
+
+        //font
+        PayloadTypeRegistry.playC2S().register(SetFontPayload.ID, SetFontPayload.CODEC);
+        PayloadTypeRegistry.playS2C().register(SyncFontPayload.ID, SyncFontPayload.CODEC);
+
+        ServerPlayNetworking.registerGlobalReceiver(SetFontPayload.ID, (payload, context) -> {
+            context.server().execute(() -> {
+                FontManager.setFont(payload.playerName(), payload.font());
+                SyncFontPayload sync = new SyncFontPayload(payload.playerName(), payload.font());
+                context.server().getPlayerManager().getPlayerList().forEach(p ->
+                        ServerPlayNetworking.send(p, sync)
+                );
+            });
+        });
 
         // Cuando el servidor recibe un pedido de cambio de sabor
         ServerPlayNetworking.registerGlobalReceiver(SetFlavorPayload.ID, (payload, context) -> {
@@ -74,5 +90,46 @@ public class FlavorPackets {
                 );
             });
         });
+    }
+
+//paquetes de las fuentes
+    // -----------------------------------------------
+// 📦 Packet Cliente → Servidor: pedir cambio de fuente
+// -----------------------------------------------
+    public record SetFontPayload(String playerName, String font)
+            implements CustomPayload {
+
+        public static final CustomPayload.Id<SetFontPayload> ID =
+                new CustomPayload.Id<>(Identifier.of("bmchatbox", "set_font"));
+
+        public static final PacketCodec<PacketByteBuf, SetFontPayload> CODEC =
+                PacketCodec.tuple(
+                        PacketCodecs.STRING, SetFontPayload::playerName,
+                        PacketCodecs.STRING, SetFontPayload::font,
+                        SetFontPayload::new
+                );
+
+        @Override
+        public CustomPayload.Id<? extends CustomPayload> getId() { return ID; }
+    }
+
+    // -----------------------------------------------
+// 📦 Packet Servidor → Cliente: sincronizar fuente
+// -----------------------------------------------
+    public record SyncFontPayload(String playerName, String font)
+            implements CustomPayload {
+
+        public static final CustomPayload.Id<SyncFontPayload> ID =
+                new CustomPayload.Id<>(Identifier.of("bmchatbox", "sync_font"));
+
+        public static final PacketCodec<PacketByteBuf, SyncFontPayload> CODEC =
+                PacketCodec.tuple(
+                        PacketCodecs.STRING, SyncFontPayload::playerName,
+                        PacketCodecs.STRING, SyncFontPayload::font,
+                        SyncFontPayload::new
+                );
+
+        @Override
+        public CustomPayload.Id<? extends CustomPayload> getId() { return ID; }
     }
 }

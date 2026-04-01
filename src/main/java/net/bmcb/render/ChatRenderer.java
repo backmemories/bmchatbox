@@ -3,6 +3,7 @@ package net.bmcb.render;
 import net.bmcb.chat.ChatManager;
 import net.bmcb.chat.ChatMessage;
 import net.bmcb.chat.FlavorManager;
+import net.bmcb.chat.FontManager;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.font.TextRenderer;
 import net.minecraft.client.gl.RenderPipelines;
@@ -149,8 +150,16 @@ public class ChatRenderer {
             List<OrderedText> lines = new java.util.ArrayList<>();
             String[] splitLines = visibleText.split("\n");
 
+            net.minecraft.text.StyleSpriteSource fontSource = new net.minecraft.text.StyleSpriteSource.Font(
+                    net.minecraft.util.Identifier.of(FontManager.getFont(msg.getSenderName()))
+            );
+            net.minecraft.text.Style fontStyle = net.minecraft.text.Style.EMPTY.withFont(fontSource);
+
             for (String part : splitLines) {
-                lines.addAll(textRenderer.wrapLines(Text.literal(part), wrapWidth));
+                lines.addAll(textRenderer.wrapLines(
+                        Text.literal(part).setStyle(fontStyle),
+                        wrapWidth
+                ));
             }
 //desplazamiento del texto en vertical
             final int TEXT_OFFSET_Y = 12; // desplazamiento extra hacia abajo

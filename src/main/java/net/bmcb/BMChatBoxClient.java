@@ -2,6 +2,7 @@ package net.bmcb;
 
 import net.bmcb.chat.ChatManager;
 import net.bmcb.chat.FlavorCommand;
+import net.bmcb.chat.FontManager;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
@@ -59,6 +60,14 @@ public class BMChatBoxClient implements ClientModInitializer {
         );
 
         FlavorCommand.register();
+
+        ClientPlayNetworking.registerGlobalReceiver(
+                FlavorPackets.SyncFontPayload.ID, (payload, context) -> {
+                    context.client().execute(() -> {
+                        FontManager.setFont(payload.playerName(), payload.font());
+                    });
+                }
+        );
 
     }
 }
